@@ -1,16 +1,36 @@
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
+import { ActivityHandler, MessageFactory, TurnContext } from 'botbuilder';
+import Keyv from 'keyv';
+import pluginHandler from '../core/handler.js';
 
-import { ActivityHandler, MessageFactory } from 'botbuilder';
-import pluginHandler from './core/handler.js';
-
-class MessageBot extends ActivityHandler {
+export class MessageBot extends ActivityHandler {
     constructor() {
         super();
         // See https://aka.ms/about-bot-activity-message to learn more about the message and other activity types.
+
+        const { MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT } = process.env;
+        const dbURI = `mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}`;
+        console.log('dbURI', dbURI);
+        this.keyv = new Keyv(dbURI);
+
+        this.keyv.on('error', err => console.error('Keyv connection error:', err));
+
+        this.onConversationUpdate(async (context, next) => {
+            this.addConversationReference(context.activity);
+            await next();
+        });
+
+        this.onEndOfConversation(async (context, next) => {
+            this.keyv.delete(context.activity.conversation.id);
+            await next();
+        });
+
         this.onMessage(async (context, next) => {
             context.sendMessage = async (text) => {
-                return await context.sendActivity(MessageFactory.text(text));
+                await context.sendActivity(MessageFactory.text(text));
+            };
+
+            context.register = async () => {
+                await this.addConversationReference(context.activity);
             };
 
             await pluginHandler.handleMessage(context);
@@ -39,6 +59,14 @@ class MessageBot extends ActivityHandler {
             await next();
         });
     }
-}
 
-export default MessageBot;
+    async addConversationReference(activity) {
+        const conversationExists = await this.keyv.has(activity.conversation.id);
+        if (conversationExists) {
+            return;
+        }
+        const conversationReference = TurnContext.getConversationReference(activity);
+
+        await this.keyv.set(conversationReference.conversation.id, conversationReference);
+    }
+}

@@ -40,7 +40,6 @@ class PluginHandler {
 
         const textWithoutQuote = text.slice(text.lastIndexOf('>') + 1);
 
-
         const textWithoutBotName = textWithoutQuote.replaceAll(this.botName, '');
 
         const tokens = textWithoutBotName.trim().split(/\s+/);

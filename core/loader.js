@@ -31,6 +31,11 @@ export async function loadCommands() {
                     throw new Error(`Plugin ${fileName} does not export a config object`);
                 }
 
+                if (config?.disable) {
+                    console.log(`Plugin ${fileName} is disabled`);
+                    continue;
+                }
+
                 if (typeof langData !== 'object') {
                     throw new Error(`Plugin ${fileName} does not export a langData object`);
                 }

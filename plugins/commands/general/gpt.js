@@ -4,7 +4,8 @@ const config = {
     name: 'gpt',
     description: 'AI GPT Chatbot',
     usage: '[message]',
-    cooldown: 3
+    cooldown: 3,
+    disabled: true
 };
 
 const langData = {

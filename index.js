@@ -4,18 +4,15 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import { loadCommands } from './core/loader.js';
-import { CloudAdapter, ConfigurationServiceClientCredentialFactory, createBotFrameworkAuthenticationFromConfiguration } from 'botbuilder';
+import { CloudAdapter, ConfigurationServiceClientCredentialFactory, createBotFrameworkAuthenticationFromConfiguration, MessageFactory } from 'botbuilder';
 import restify from 'restify';
-import MessageBot from './bot.js';
-
-
-
-
+import { MessageBot } from './bots/index.js';
+const { MicrosoftAppId, MicrosoftAppPassword, MicrosoftAppType, MicrosoftAppTenantId } = process.env;
 
 const server = restify.createServer();
 server.use(restify.plugins.bodyParser());
 
-server.listen(process.env.port || process.env.PORT || 3978, '100.97.113.97', async () => {
+server.listen(process.env.port || process.env.PORT || 3978, process.env.HOST || '0.0.0.0', async () => {
     console.log(`\n${server.name} listening to ${server.url}`);
     console.log('Loading commands...');
     await loadCommands();
@@ -23,10 +20,10 @@ server.listen(process.env.port || process.env.PORT || 3978, '100.97.113.97', asy
 });
 
 const credentialsFactory = new ConfigurationServiceClientCredentialFactory({
-    MicrosoftAppId: process.env.MicrosoftAppId,
-    MicrosoftAppPassword: process.env.MicrosoftAppPassword,
-    MicrosoftAppType: process.env.MicrosoftAppType,
-    MicrosoftAppTenantId: process.env.MicrosoftAppTenantId
+    MicrosoftAppId,
+    MicrosoftAppPassword,
+    MicrosoftAppType,
+    MicrosoftAppTenantId
 });
 
 const botFrameworkAuthentication = createBotFrameworkAuthenticationFromConfiguration(null, credentialsFactory);
@@ -59,13 +56,26 @@ const onTurnErrorHandler = async (context, error) => {
 adapter.onTurnError = onTurnErrorHandler;
 
 // Create the main dialog.
-const myBot = new MessageBot();
+const messageBot = new MessageBot();
 
 // Listen for incoming requests.
 server.post('/api/messages', async (req, res) => {
     // Route received a request to adapter for processing
-    console.log('got a request');
-    await adapter.process(req, res, (context) => myBot.run(context));
+    await adapter.process(req, res, (context) => messageBot.run(context));
+});
+
+server.post('/api/send', async (req, res) => {
+    const { body } = req;
+    const { text, conversationId } = body;
+    const conversationReference = await messageBot.keyv.get(conversationId);
+    if (!conversationReference) {
+        res.send(404);
+        return;
+    }
+    await adapter.continueConversationAsync(MicrosoftAppId, conversationReference, async (context) => {
+        await context.sendActivity(MessageFactory.text(text));
+    });
+    res.send(200);
 });
 
 // Listen for Upgrade requests for Streaming.
@@ -76,5 +86,5 @@ server.on('upgrade', async (req, socket, head) => {
     // Set onTurnError for the CloudAdapter created for each connection.
     streamingAdapter.onTurnError = onTurnErrorHandler;
 
-    await streamingAdapter.process(req, socket, head, (context) => myBot.run(context));
+    await streamingAdapter.process(req, socket, head, (context) => messageBot.run(context));
 });
