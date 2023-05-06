@@ -6,8 +6,12 @@ dotenv.config();
 import { loadCommands } from './core/loader.js';
 import { CloudAdapter, ConfigurationServiceClientCredentialFactory, createBotFrameworkAuthenticationFromConfiguration, MessageFactory } from 'botbuilder';
 import restify from 'restify';
+<<<<<<< Updated upstream
 import { MessageBot } from './bots/index.js';
 const { MicrosoftAppId, MicrosoftAppPassword, MicrosoftAppType, MicrosoftAppTenantId } = process.env;
+=======
+import MessageBot from './bot.js';
+>>>>>>> Stashed changes
 
 const server = restify.createServer();
 server.use(restify.plugins.bodyParser());
