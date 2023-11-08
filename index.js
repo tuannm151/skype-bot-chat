@@ -6,14 +6,17 @@ dotenv.config();
 import { loadCommands } from './core/loader.js';
 import { CloudAdapter, ConfigurationServiceClientCredentialFactory, createBotFrameworkAuthenticationFromConfiguration, MessageFactory } from 'botbuilder';
 import restify from 'restify';
-<<<<<<< Updated upstream
 import { MessageBot } from './bots/index.js';
 const { MicrosoftAppId, MicrosoftAppPassword, MicrosoftAppType, MicrosoftAppTenantId } = process.env;
-=======
-import MessageBot from './bot.js';
->>>>>>> Stashed changes
+import corsMiddleware from 'restify-cors-middleware2';
+
+const cors = corsMiddleware({
+    origins: ['*']
+});
 
 const server = restify.createServer();
+server.pre(cors.preflight);
+server.use(cors.actual);
 server.use(restify.plugins.bodyParser());
 
 server.listen(process.env.port || process.env.PORT || 3978, process.env.HOST || '0.0.0.0', async () => {
@@ -64,7 +67,6 @@ const messageBot = new MessageBot();
 
 // Listen for incoming requests.
 server.post('/api/messages', async (req, res) => {
-    // Route received a request to adapter for processing
     await adapter.process(req, res, (context) => messageBot.run(context));
 });
 

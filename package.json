@@ -22,12 +22,10 @@
     "botbuilder": "~4.15.0",
     "dotenv": "~8.2.0",
     "galeforce": "^0.6.1",
-<<<<<<< Updated upstream
     "keyv": "^4.5.2",
-=======
     "puppeteer-core": "^19.11.1",
->>>>>>> Stashed changes
-    "restify": "~8.5.1"
+    "restify": "~8.5.1",
+    "restify-cors-middleware2": "^2.2.1"
   },
   "devDependencies": {
     "eslint": "^7.0.0",
