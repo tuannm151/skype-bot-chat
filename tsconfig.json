@@ -1,0 +1,26 @@
+{
+    "compilerOptions": {
+      "target": "ES2021",
+      "module": "CommonJS",
+      "strict": true,
+      "outDir": "./dist",
+      "rootDir": "./src",
+      "declaration": true,              
+      "declarationMap": true,  
+      "sourceMap": true,
+      "incremental": true,
+      "esModuleInterop": true, 
+      "tsBuildInfoFile": "./dist/.tsbuildinfo",
+      "moduleResolution": "node",
+      "baseUrl": "./src",
+      "allowSyntheticDefaultImports": true,
+      "useUnknownInCatchVariables": false,
+      "paths" : {
+        "~/*": ["*"],
+      }
+    },
+    "exclude": [
+      "node_modules",
+      "dist"
+    ]
+}
