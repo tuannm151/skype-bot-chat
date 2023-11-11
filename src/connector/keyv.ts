@@ -1,13 +1,12 @@
 import Keyv from "keyv";
-const { MYSQL_HOST, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE, MYSQL_PORT } = process.env;
+const { POSTGRES_URI } = process.env;
 
 class KeyvSingleton {
     private static instance: KeyvSingleton;
     private keyv: Keyv;
   
     private constructor() {
-        const dbURI = `mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}`;
-        this.keyv = new Keyv(dbURI);
+        this.keyv = new Keyv(POSTGRES_URI);
     }
   
     public static getInstance(): KeyvSingleton {
