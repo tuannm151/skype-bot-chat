@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc --build && resolve-tspaths",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
-    "start": "tsc --build && node ./dist/index.js && resolve-tspaths",
+    "start": "tsc --build && resolve-tspaths && node ./dist/index.js",
     "test": "tsc --build && nyc mocha dist/tests/**/*.test.js",
     "watch": "nodemon --watch ./src -e ts --exec \"npm run start\""
   },
