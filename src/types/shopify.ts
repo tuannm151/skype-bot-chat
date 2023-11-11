@@ -1,12 +1,3 @@
-enum ApiVersion {
-    "2023-01" = "2023-01",
-    "2023-04" = "2023-04",
-    "2023-07" = "2023-07",
-    "2023-10" = "2023-10",
-    "2024-01" = "2024-01",
-    "unstable" = "unstable",
-}
-
 enum AppProxyPrefix {
     apps = "apps",
     a = "a",
@@ -28,7 +19,7 @@ interface ShopifyAppInfo {
     embedded: boolean;
     appUrl: string;
     redirectUrls: string[];
-    eventVersion: ApiVersion;
+    eventVersion: string;
     customerDataRequestEndpoint: string;
     customerDataErasureEndpoint: string;
     shopDataErasureEndpoint: string;
@@ -40,6 +31,5 @@ type PartialShopifyAppInfo = Partial<ShopifyAppInfo>;
 export {
     ShopifyAppInfo,
     PartialShopifyAppInfo,
-    ApiVersion,
     AppProxyPrefix,
 };

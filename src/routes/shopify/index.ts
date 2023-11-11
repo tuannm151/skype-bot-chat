@@ -1,8 +1,15 @@
-import { Server } from "restify";
+import authenticateMiddleware from "~/middlewares/authentication";
 import { handleCreateShopifyApp, handleUpdateApiAccess, handleUpdateShopifyApp } from "./handler";
+import { Router } from "~/utils/router";
 
-export default function(server : Server) {
-    server.post('/api/shopify/app', handleCreateShopifyApp);
-    server.put('/api/shopify/app/:appId', handleUpdateShopifyApp);
-    server.put('/api/shopify/app/:appId/api-access', handleUpdateApiAccess);
-}
+const router = new Router({
+    prefix: "/api/shopify"
+});
+
+router.use(authenticateMiddleware);
+
+router.post('/app', handleCreateShopifyApp);
+router.put('/app/:appId', handleUpdateShopifyApp);
+router.put('/app/:appId/api-access', handleUpdateApiAccess);
+
+export default router;

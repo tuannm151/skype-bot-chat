@@ -6,6 +6,7 @@ const { BROWSER_WS_ENDPOINT } = process.env;
 
 const handleCreateShopifyApp = async (req: Request, res: Response) => {
     try {
+        res.send(200);
         const browser = await puppeteer.connect({
             browserWSEndpoint: BROWSER_WS_ENDPOINT,
         });
@@ -19,15 +20,14 @@ const handleCreateShopifyApp = async (req: Request, res: Response) => {
     
         await browser.close();
     } catch (err) {
-        if (err instanceof Error) {
-            console.error(err.message);
-        }
+        console.error(err);
         res.send(500);
     }
 };
 
 const handleUpdateShopifyApp = async (req: Request, res: Response) => {
     try {
+        res.send(200);
         const browser = await puppeteer.connect({
             browserWSEndpoint: BROWSER_WS_ENDPOINT,
         });
@@ -42,15 +42,14 @@ const handleUpdateShopifyApp = async (req: Request, res: Response) => {
     
         await browser.close();
     } catch (err) {
-        if (err instanceof Error) {
-            console.error(err.message);
-        }
+        console.error(err);
         res.send(500);
     }
 };
 
 const handleUpdateApiAccess = async (req: Request, res: Response) => {
     try {
+        res.send(200);
         const browser = await puppeteer.connect({
             browserWSEndpoint: BROWSER_WS_ENDPOINT,
         });
@@ -64,10 +63,7 @@ const handleUpdateApiAccess = async (req: Request, res: Response) => {
     
         await browser.close();
     } catch (err) {
-        if (err instanceof Error) {
-            console.error(err.message);
-        }
-        res.send(500);
+        console.error(err);
     }
 };
 

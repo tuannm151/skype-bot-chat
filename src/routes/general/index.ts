@@ -1,7 +1,12 @@
-import { Server } from "restify";
+import authenticateMiddleware from "~/middlewares/authentication";
 import { handleReceiveMessage, handleSendMessage } from "./handler";
+import { Router } from "~/utils/router";
 
-export default function(server : Server) {
-    server.post('/api/send', handleSendMessage);
-    server.post('/api/messages', handleReceiveMessage);
-}
+const router = new Router({
+    prefix: "/api"
+});
+
+router.post('/send', authenticateMiddleware, handleSendMessage);
+router.post('/messages', handleReceiveMessage);
+
+export default router;

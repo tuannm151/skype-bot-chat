@@ -1,11 +1,15 @@
-import { PartialShopifyAppInfo } from "~/types/shopify";
-import { Page } from "puppeteer-core";
+import {  PartialShopifyAppInfo } from "~/types/shopify";
+import  { Page } from "puppeteer-core";
 
 const chooseDistribution = async (page: Page, partnerId : string, appId : string) => {
     await page.goto(`https://partners.shopify.com/${partnerId}/apps/${appId}/distribution`);
     const publicInputSelector = "#AppFrameMain input.Polaris-RadioButton__Input[value='public']";
     await page.waitForSelector(publicInputSelector);
     await page.click(publicInputSelector);
+
+    const selectDistributionSelector = "#AppFrameMain .Polaris-Button--primary";
+    await page.waitForSelector(selectDistributionSelector);
+    await page.click(selectDistributionSelector);
 
     const publicDistributionSubmitSelector = "div.Polaris-Modal-Dialog__Modal button.Polaris-Button--primary";
     await page.waitForSelector(publicDistributionSubmitSelector);
@@ -31,7 +35,6 @@ const setupApiAccess = async (page: Page, partnerId: string, appId: string) => {
     const saveButtonSelector = "#PROTECTED_CUSTOMER_DATA-reasons-selector-collapsible .Polaris-Button--primary";
     await page.evaluate(async (selector) => {
         const button = document.querySelector(selector);
-        // check if button has class Polaris-Button--disabled
         if(button instanceof HTMLElement) {
             button.click();
         }
@@ -62,12 +65,12 @@ const setupApiAccess = async (page: Page, partnerId: string, appId: string) => {
         }
         await new Promise(resolve => setTimeout(resolve, 2000));
         const saveButtonSelector = `${selector} .Polaris-Button--primary`;
-        await page.evaluate((selector) => {
-            const button = document.querySelector(selector);
-            if(button instanceof HTMLElement) {
-                button.click();
+        const saveButton = await page.$(saveButtonSelector);
+        await page.evaluate((element) => {
+            if(element instanceof HTMLElement) {
+                element.click();
             }
-        }, saveButtonSelector);
+        }, saveButton);
         await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
@@ -89,54 +92,82 @@ const setupApiAccess = async (page: Page, partnerId: string, appId: string) => {
     await new Promise(resolve => setTimeout(resolve, 2000));
     const saveDetailButtonSelector = ".Polaris-PageActions .Polaris-Button--primary";
     await page.waitForSelector(saveDetailButtonSelector);
-    await page.evaluate((selector) => {
-        const button = document.querySelector(selector);
-        if(button instanceof HTMLElement) {
-            button.click();
+    const saveDetailButton = await page.$(saveDetailButtonSelector);
+    await page.evaluate((element) => {
+        if(element instanceof HTMLElement) {
+            element.click();
         }
-    }, saveDetailButtonSelector);
+    }
+    , saveDetailButton);
 };
 
 const changeInputByLabel = async (page: Page, label: string, value: string) => {
     // find label with text using xpath
     const labelSelector = `//label[text()='${label}']`;
     const labelElement = await page.waitForXPath(labelSelector);
-    if(!labelElement || !(labelElement instanceof HTMLElement)) {
-        throw new Error(`Cannot find label with text ${label}`);
+    if(!labelElement) {
+        throw new Error(`Cannot find label ${labelSelector}`);
     }
-    const targetId = labelElement.getAttribute("for");
+    const targetId = await labelElement.evaluate(node => {
+        if(!(node instanceof HTMLElement)) {
+            return null;
+        }
+        return node.getAttribute("for");
+    });
     if(!targetId) {
         throw new Error(`Cannot find target id of label ${label}`);
     }
+
     const targetSelector = `#${targetId}`;
     await page.waitForSelector(targetSelector);
-    await page.evaluate((selector) => {
-        const target = document.querySelector(selector);
-        if(target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-            target.value = value;
+    const target = await page.$eval(targetSelector, (el) => {
+        if(el instanceof HTMLInputElement|| el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+            return {
+                currentVal: el.value,
+                tagName: el.tagName.toLowerCase(),
+            };
         }
-        if(target instanceof HTMLSelectElement) {
-            target.value = value;
-        }
-    }, targetSelector);
+        return null;
+       
+    });
+    if(!target) {
+        throw new Error(`Cannot find target ${targetSelector}`);
+    }
+
+    if(target.currentVal === value) {
+        return;
+    }
+
+    if(target.tagName === "input" || target.tagName === "textarea") {
+        await page.click(targetSelector);
+        await page.keyboard.down("Control");
+        await page.keyboard.press("A");
+        await page.keyboard.up("Control");
+        await page.keyboard.press("Backspace");
+        await page.keyboard.type(value);
+    }
+    if(target.tagName === "select") {
+        await page.select(targetSelector, value);
+    }
 };
 
 const setEmbedded = async (page: Page, partnerId: string, appId: string, embedded: boolean) => {
     await page.goto(`https://partners.shopify.com/${partnerId}/apps/${appId}/edit/embedded_app`);
     const buttonSelector = "#PolarisSettingToggle1";
-    const button = await page.waitForSelector(buttonSelector);
-    if(!button) {
+    await page.waitForSelector(buttonSelector);
+    const buttonValue = await page.$eval(buttonSelector, (el) => {
+        if(el instanceof HTMLButtonElement) {
+            return el.getAttribute("aria-checked");
+        }
+        return null;
+    });
+    if(!buttonValue) {
         throw new Error(`Cannot find button toggle embedded ${buttonSelector}`);
     }
-    await button.evaluate(node => {
-        if(!(node instanceof HTMLButtonElement)) {
-            throw new Error(`Cannot find button toggle embedded ${buttonSelector}`);
-        }
-        if(node.getAttribute("aria-checked") === embedded.toString()) {
-            return;
-        }
-        node.click();
-    });
+    if(buttonValue === embedded.toString()) {
+        return;
+    }
+    await page.click(buttonSelector);
     const confirmSelector = ".Polaris-Modal-Dialog__Modal .Polaris-Button--primary";
     await page.waitForSelector(confirmSelector);
     await page.click(confirmSelector);
@@ -178,13 +209,19 @@ const editAppInfo = async (page: Page, partnerId: string, appId: string, appInfo
     if(appInfo.embedded) {
         await setEmbedded(page, partnerId, appId, appInfo.embedded);
     }
+
+    try {
+        const saveButtonSelector = ".Polaris-Frame__ContextualSaveBar .Polaris-Button--primary";
+        await page.waitForSelector(saveButtonSelector);
+        await page.click(saveButtonSelector);
+    } catch (err) {
+        console.log("Cannot find save button");
+    }
 };
-
-
 
 const createNewApp = async (page: Page, partnerId: string, appInfo: PartialShopifyAppInfo) => {
     await page.goto(`https://partners.shopify.com/${partnerId}/apps/new`);
-    const createAppSelector = "#AppFrameMain a.Polaris-Button--primary[href*='apps/new']";
+    const createAppSelector = "#AppFrameMain .Polaris-Layout__Section--secondary .Polaris-Button";
     await page.waitForSelector(createAppSelector);
     await page.click(createAppSelector);
 

@@ -7,7 +7,7 @@ import restify from 'restify';
 import corsMiddleware from 'restify-cors-middleware2';
 import  { adapter, AdapterSingleton } from './connector/adapter.js';
 import messageBot from './bots/messageBot.js';
-import routes from './routes/index.js';
+import routers from "~/routes";
 
 const cors = corsMiddleware({
     origins: ['*']
@@ -50,7 +50,7 @@ const onTurnErrorHandler = async (context : TurnContext, error : Error) => {
 // Set the onTurnError for the singleton CloudAdapter.
 adapter.onTurnError = onTurnErrorHandler;
 
-routes(server);
+routers(server);
 
 // Listen for Upgrade requests for Streaming.
 server.on('upgrade', async (req, socket, head) => {

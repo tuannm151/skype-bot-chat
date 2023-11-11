@@ -1,6 +1,5 @@
 import { readdirSync } from 'fs';
 import { resolve as resolvePath } from 'path';
-import { pathToFileURL } from 'url';
 import pluginHandler from './handler.js';
 import { Plugin } from '~/types';
 

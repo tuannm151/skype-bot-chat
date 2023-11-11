@@ -4,6 +4,7 @@ declare global {
           [key: string]: string | undefined,
           MicrosoftAppId: string,
           BROWSER_WS_ENDPOINT: string,
+          AUTH_SECRET: string,
         }
     }
 }

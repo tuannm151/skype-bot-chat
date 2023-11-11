@@ -1,8 +1,8 @@
-import { Server } from "restify";
 import generalRouter from "./general";
 import shopifyRouter from "./shopify";
+import { combineRouters } from "~/utils/router";
 
-export default function(server: Server) {
-    generalRouter(server);
-    shopifyRouter(server);
-}
+export default combineRouters([
+    generalRouter,
+    shopifyRouter
+]);
