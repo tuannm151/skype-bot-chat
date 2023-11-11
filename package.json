@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsc --build && resolve-tspaths",
     "lint": "tslint -c tslint.json 'src/**/*.ts'",
-    "start": "tsc --build && node ./dist/index.js",
+    "start": "tsc --build && node ./dist/index.js && resolve-tspaths",
     "test": "tsc --build && nyc mocha dist/tests/**/*.test.js",
     "watch": "nodemon --watch ./src -e ts --exec \"npm run start\""
   },
@@ -27,7 +27,6 @@
     "dotenv": "~8.2.0",
     "galeforce-zenkjie": "^0.6.4",
     "keyv": "^4.5.2",
-    "puppeteer": "^21.5.1",
     "puppeteer-core": "^21.5.0",
     "restify": "^11.1.0",
     "restify-cors-middleware2": "^2.2.1"
