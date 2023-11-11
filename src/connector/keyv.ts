@@ -23,5 +23,14 @@ class KeyvSingleton {
 }
   
 const keyv = KeyvSingleton.getInstance().getKeyv();
-export default keyv;
+
+const initKeyv = () => {
+    KeyvSingleton.getInstance().getKeyv();
+};
+
+export {
+    initKeyv,
+    keyv,
+    KeyvSingleton
+};
    

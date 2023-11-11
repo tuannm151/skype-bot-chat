@@ -8,6 +8,7 @@ import corsMiddleware from 'restify-cors-middleware2';
 import  { adapter, AdapterSingleton } from './connector/adapter.js';
 import messageBot from './bots/messageBot.js';
 import routers from "~/routes";
+import { initKeyv } from './connector/keyv.js';
 
 const cors = corsMiddleware({
     origins: ['*']
@@ -22,9 +23,11 @@ server.use(restify.plugins.bodyParser({
 
 server.listen(process.env.port || process.env.PORT || 3978, process.env.HOST || '0.0.0.0', async () => {
     console.log(`\n${server.name} listening to ${server.url}`);
-    console.log('Loading commands...');
     await loadCommands();
     console.log('Commands loaded.');
+    // Set the onTurnError for the singleton CloudAdapter.
+    adapter.onTurnError = onTurnErrorHandler;
+    initKeyv();
 });
 
 // Catch-all for errors.
@@ -46,9 +49,6 @@ const onTurnErrorHandler = async (context : TurnContext, error : Error) => {
     await context.sendActivity('The bot encountered an error or bug.');
     await context.sendActivity('To continue to run this bot, please fix the bot source code.');
 };
-
-// Set the onTurnError for the singleton CloudAdapter.
-adapter.onTurnError = onTurnErrorHandler;
 
 routers(server);
 
