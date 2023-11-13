@@ -2,6 +2,7 @@ import { readdirSync } from 'fs';
 import { resolve as resolvePath } from 'path';
 import pluginHandler from './handler.js';
 import { Plugin } from '~/types';
+import logger from '~/logger/index.js';
 
 const commandsPath = resolvePath(__dirname, '../plugins/commands');
 
@@ -12,6 +13,7 @@ export async function loadCommands() {
 
         const categoryFiles = readdirSync(categoryPath).filter((file) => file.endsWith('.js') || file.endsWith('.mjs') || file.endsWith('.cjs'));
 
+        let loadedCount = 0;
         for (const plugin of categoryFiles) {
             const fileName = plugin;
             try {
@@ -22,21 +24,22 @@ export async function loadCommands() {
                 const { config, onLoad } = pluginExport;
 
                 if (config.disabled) {
-                    console.log(`Plugin ${fileName} is disabled`);
+                    logger.info(`Plugin ${fileName} is disabled`);
                     continue;
                 }
 
                 if (onLoad) {
-                    try {
-                        await onLoad();
-                    } catch (err) {
-                        console.error(`Error running onLoad for plugin ${fileName}: ${err}`);
-                    }
+                    await onLoad();
                 }
                 pluginHandler.setCommand(pluginExport);
+                loadedCount++;
             } catch (err) {
-                console.error(`Error loading plugin ${fileName}: ${err}`);
+                logger.error(`Error loading plugin ${fileName}`, err);
+            }
+            if (loadedCount > 0) {
+                logger.info(`Loaded ${loadedCount} plugins from ${category}`);
             }
         }
+        
     }
 }

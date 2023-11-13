@@ -1,5 +1,6 @@
 import { MessageFactory } from 'botbuilder';
 import puppeteer from 'puppeteer-core';
+import logger from '~/logger';
 import { CommandHandlerArgs, Config, LangData } from "~/types";
 
 const config : Config = {
@@ -75,7 +76,7 @@ async function onCall({ context, params, getLang } : CommandHandlerArgs) {
 
         await context.sendActivity(message);
     } catch (e) {
-        console.error(e);
+        logger.error(e);
         await context.sendActivity(`${getLang('error')} ${e.message}`);
     } finally {
         browser && await browser.close();

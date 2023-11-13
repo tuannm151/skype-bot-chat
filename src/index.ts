@@ -8,7 +8,7 @@ import corsMiddleware from 'restify-cors-middleware2';
 import  { adapter, AdapterSingleton } from './connector/adapter.js';
 import messageBot from './bots/messageBot.js';
 import routers from "~/routes";
-import { initKeyv } from './connector/keyv.js';
+import logger from './logger/index.js';
 
 const cors = corsMiddleware({
     origins: ['*']
@@ -22,12 +22,15 @@ server.use(restify.plugins.bodyParser({
 }));
 
 server.listen(process.env.port || process.env.PORT || 3978, process.env.HOST || '0.0.0.0', async () => {
-    console.log(`\n${server.name} listening to ${server.url}`);
+    logger.info(`${server.name} listening to ${server.url}`);
     await loadCommands();
-    console.log('Commands loaded.');
     // Set the onTurnError for the singleton CloudAdapter.
     adapter.onTurnError = onTurnErrorHandler;
-    initKeyv();
+    try {
+        throw new Error('test');
+    } catch (err) {
+        logger.error("abc", err);
+    }
 });
 
 // Catch-all for errors.
@@ -35,7 +38,7 @@ const onTurnErrorHandler = async (context : TurnContext, error : Error) => {
     // This check writes out errors to console log .vs. app insights.
     // NOTE: In production environment, you should consider logging this to Azure
     //       application insights.
-    console.error(`\n [onTurnError] unhandled error: ${error}`);
+    logger.error(`\n [onTurnError] unhandled error: ${error}`);
 
     // Send a trace activity, which will be displayed in Bot Framework Emulator
     await context.sendTraceActivity(

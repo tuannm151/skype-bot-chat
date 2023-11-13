@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "tsc --build && resolve-tspaths",
-    "lint": "tslint -c tslint.json 'src/**/*.ts'",
+    "lint": "eslint ./src",
     "start": "tsc --build && resolve-tspaths && node ./dist/index.js",
     "test": "tsc --build && nyc mocha dist/tests/**/*.test.js",
     "watch": "nodemon --watch ./src -e ts --exec \"npm run start\""
@@ -20,16 +20,17 @@
     "url": "https://github.com"
   },
   "dependencies": {
-    "@keyv/mysql": "^1.6.2",
+    "@prisma/client": "5.5.2",
     "axios": "^1.3.4",
     "botbuilder": "~4.21.1",
     "botframework-streaming": "^4.21.1",
     "dotenv": "~8.2.0",
     "galeforce-zenkjie": "^0.6.4",
-    "keyv": "^4.5.2",
+    "prisma": "^5.5.2",
     "puppeteer-core": "^21.5.0",
     "restify": "^11.1.0",
-    "restify-cors-middleware2": "^2.2.1"
+    "restify-cors-middleware2": "^2.2.1",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "@types/dotenv": "6.1.1",
@@ -44,5 +45,8 @@
     "prettier": "^3.0.3",
     "resolve-tspaths": "^0.8.17",
     "typescript": "~5.2.2"
+  },
+  "prisma": {
+    "schema": "./src/prisma/schema.prisma"
   }
 }

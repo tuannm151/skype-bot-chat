@@ -1,13 +1,17 @@
 import { ActivityHandler, MessageFactory } from 'botbuilder';
+import prisma from '~/connector/prisma';
 import pluginHandler from '~/core/handler.js';
-import keyv from '~/connector/keyv.js';
 
 class MessageBot extends ActivityHandler {
     constructor() {
         super();
 
         this.onEndOfConversation(async (context, next) => {
-            keyv.delete(context.activity.conversation.id);
+            await prisma.conversation.delete({
+                where: {
+                    id: context.activity.conversation.id
+                }
+            });
             await next();
         });
 

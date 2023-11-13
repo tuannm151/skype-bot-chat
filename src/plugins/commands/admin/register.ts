@@ -1,4 +1,7 @@
-import keyv from "~/connector/keyv";
+import { Prisma } from "@prisma/client";
+import { TurnContext } from "botbuilder";
+import prisma from "~/connector/prisma";
+import logger from "~/logger";
 import { CommandHandlerArgs, Config, LangData } from "~/types";
 
 const config : Config = {
@@ -6,7 +9,6 @@ const config : Config = {
     description: 'register conversation to db',
     usage: '',
     cooldown: 3,
-    disabled: true
 };
 
 const langData : LangData = {
@@ -22,15 +24,31 @@ async function onCall({ context, getLang } : CommandHandlerArgs) {
     try {
         // check if conversation already registered
         const conversationId = context.activity.conversation.id;
-        const conversationExists = await keyv.has(conversationId);
-        if (conversationExists) {
+
+        const conversation = await prisma.conversation.findUnique({
+            where: {
+                id: conversationId
+            }
+        });
+
+        if (conversation) {
             await context.sendActivity('Conversation already registered');
             return;
         }
-        await keyv.set(conversationId, context.activity);
-        await context.sendActivity('Registered conversation');
+
+        await prisma.conversation.create({
+            data : {
+                id: conversationId,
+                name: context.activity.conversation.name,
+                isGroup: context.activity.conversation.isGroup,
+                type: context.activity.conversation.conversationType,
+                reference: TurnContext.getConversationReference(context.activity) as Prisma.JsonObject
+            }
+        });
+      
+        await context.sendActivity('Registered new conversation');
     } catch (e) {
-        console.error(e);
+        logger.error(e);
         await context.sendActivity(`${getLang('error')} ${e.message}`);
     }
 }

@@ -1,4 +1,5 @@
 import { MessageFactory, TurnContext } from 'botbuilder';
+import logger from '~/logger';
 import { Lang, LangData, ObjectData, Plugin } from '~/types';
 
 class PluginHandler {
@@ -39,7 +40,7 @@ class PluginHandler {
         const textWithoutBotName = textWithoutQuote.replaceAll(this.botName, '');
 
         const tokens = textWithoutBotName.trim().split(/\s+/);
-        console.log('tokens', tokens);
+        logger.info(`Received message tokens: ${tokens}`);
 
         const command = tokens[0];
         const commandPrefix = process.env.COMMAND_PREFIX || '!';
@@ -67,7 +68,7 @@ class PluginHandler {
         try {
             await commandHandler.onCall({ context, params, getLang: getLangCommand });
         } catch (err) {
-            console.error(`Error running onCall for plugin ${command}: ${err}`);
+            logger.error(`Error running onCall for plugin ${command}`, err);
         }
     }
 }

@@ -2,6 +2,7 @@ import { Request, Response } from "restify";
 import { createNewApp, editAppInfo, setupApiAccess } from "./puperteer";
 import puppeteer from "puppeteer-core";
 import { PartialShopifyAppInfo } from "~/types/shopify";
+import logger from "~/logger";
 const { BROWSER_WS_ENDPOINT } = process.env;
 
 const handleCreateShopifyApp = async (req: Request, res: Response) => {
@@ -20,7 +21,7 @@ const handleCreateShopifyApp = async (req: Request, res: Response) => {
     
         await browser.close();
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         res.send(500);
     }
 };
@@ -42,7 +43,7 @@ const handleUpdateShopifyApp = async (req: Request, res: Response) => {
     
         await browser.close();
     } catch (err) {
-        console.error(err);
+        logger.error(err);
         res.send(500);
     }
 };
@@ -63,7 +64,7 @@ const handleUpdateApiAccess = async (req: Request, res: Response) => {
     
         await browser.close();
     } catch (err) {
-        console.error(err);
+        logger.error(err);
     }
 };
 

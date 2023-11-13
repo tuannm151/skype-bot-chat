@@ -1,5 +1,6 @@
 import {  PartialShopifyAppInfo } from "~/types/shopify";
 import  { Page } from "puppeteer-core";
+import logger from "~/logger";
 
 const chooseDistribution = async (page: Page, partnerId : string, appId : string) => {
     await page.goto(`https://partners.shopify.com/${partnerId}/apps/${appId}/distribution`);
@@ -215,7 +216,7 @@ const editAppInfo = async (page: Page, partnerId: string, appId: string, appInfo
         await page.waitForSelector(saveButtonSelector);
         await page.click(saveButtonSelector);
     } catch (err) {
-        console.log("Cannot find save button");
+        logger.error("Cannot find save button", err);
     }
 };
 

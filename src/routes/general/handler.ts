@@ -1,8 +1,9 @@
 import { Request, Response } from "restify";
-import keyv from "~/connector/keyv";
-import { MessageFactory } from "botbuilder";
+import { ConversationReference, MessageFactory } from "botbuilder";
 import { adapter } from "~/connector/adapter";
 import { messageBot } from "~/bots";
+import prisma from "~/connector/prisma";
+import logger from "~/logger";
 
 const { MicrosoftAppId } = process.env;
 
@@ -10,20 +11,23 @@ const handleSendMessage = async (req: Request, res: Response) => {
     try {
         const { body } = req;
         const { text, conversationId } = body;
-        const conversationReference = await keyv.get(conversationId);
-        if (!conversationReference) {
+        const conversation = await prisma.conversation.findUnique({
+            where: {
+                id: conversationId
+            }
+        });
+       
+        if (!conversation?.reference || typeof conversation.reference !== 'object') {
             res.send(404);
             return;
         }
     
-        await adapter.continueConversationAsync(MicrosoftAppId, conversationReference, async (context) => {
+        await adapter.continueConversationAsync(MicrosoftAppId, conversation.reference as Partial<ConversationReference>, async (context) => {
             await context.sendActivity(MessageFactory.text(text));
         });
         res.send(200);
     } catch (err) {
-        if(err instanceof Error) {
-            console.error(err.message);
-        }
+        logger.error(err);
     }
 };
 

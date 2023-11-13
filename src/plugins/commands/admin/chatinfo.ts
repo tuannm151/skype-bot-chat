@@ -1,11 +1,11 @@
+import logger from "~/logger";
 import { CommandHandlerArgs, Config, LangData } from "~/types";
 
 const config : Config = {
     name: 'chatinfo',
     description: 'Get chat info',
     usage: '',
-    cooldown: 3,
-    disabled: true
+    cooldown: 3
 };
 
 const langData : LangData = {
@@ -22,7 +22,7 @@ async function onCall({ context, getLang } : CommandHandlerArgs)  {
         const conversationId = context.activity.conversation.id;
         await context.sendActivity(`Conversation ID: ${conversationId}`);
     } catch (e) {
-        console.error(e);
+        logger.error(e);
         await context.sendActivity(`${getLang('error')} ${e.message}`);
     }
 }
