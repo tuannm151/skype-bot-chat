@@ -3,10 +3,18 @@ import { createNewApp, editAppInfo, setupApiAccess } from "./puperteer";
 import puppeteer from "puppeteer-core";
 import { PartialShopifyAppInfo } from "~/types/shopify";
 import logger from "~/logger";
+import { CreateShopifyAppBodySchema, UpdateShopifyAppBodySchema } from "./validation";
 const { BROWSER_WS_ENDPOINT } = process.env;
 
+interface RequestShopifyAppBody {
+    partnerId: string,
+    appInfo: PartialShopifyAppInfo
+}
+ 
 const handleCreateShopifyApp = async (req: Request, res: Response) => {
     try {
+        const createShopifyApp = CreateShopifyAppBodySchema.parse(req.body);
+        const { partnerId, appInfo } = createShopifyApp as RequestShopifyAppBody;
         res.send(200);
         const browser = await puppeteer.connect({
             browserWSEndpoint: BROWSER_WS_ENDPOINT,
@@ -14,9 +22,13 @@ const handleCreateShopifyApp = async (req: Request, res: Response) => {
     
         const page = await browser.newPage();
 
-        const partnerId : string = req.body.partnerId;
-        const appInfo : PartialShopifyAppInfo = req.body.appInfo;
-    
+        if(!partnerId || !appInfo || !appInfo.name) {
+            res.send(400, {
+                message: 'Missing required fields (partnerId, appInfo)'
+            });
+            return;
+        }
+            
         await createNewApp(page, partnerId, appInfo);
     
         await browser.close();
@@ -28,6 +40,9 @@ const handleCreateShopifyApp = async (req: Request, res: Response) => {
 
 const handleUpdateShopifyApp = async (req: Request, res: Response) => {
     try {
+        const createShopifyApp = UpdateShopifyAppBodySchema.parse(req.body);
+        const { partnerId, appInfo } = createShopifyApp as RequestShopifyAppBody;
+
         res.send(200);
         const browser = await puppeteer.connect({
             browserWSEndpoint: BROWSER_WS_ENDPOINT,
@@ -35,9 +50,14 @@ const handleUpdateShopifyApp = async (req: Request, res: Response) => {
     
         const page = await browser.newPage();
 
-        const partnerId : string = req.body.partnerId;
-        const appId : string = req.params.appId;
-        const appInfo : PartialShopifyAppInfo = req.body.appInfo;
+        const appId = req.params.appId;
+
+        if(!appId || typeof appId !== 'string') {
+            res.send(400, {
+                message: 'Missing required fields (appId)'
+            });
+            return;
+        }
     
         await editAppInfo(page, partnerId, appId, appInfo);
     
@@ -50,6 +70,14 @@ const handleUpdateShopifyApp = async (req: Request, res: Response) => {
 
 const handleUpdateApiAccess = async (req: Request, res: Response) => {
     try {
+        const partnerId = req.body.partnerId;
+        const appId = req.params.appId;
+        if(!partnerId || !appId || typeof partnerId !== 'string' || typeof appId !== 'string') {
+            res.send(400, {
+                message: 'Missing required fields (partnerId, appId)'
+            });
+            return;
+        }
         res.send(200);
         const browser = await puppeteer.connect({
             browserWSEndpoint: BROWSER_WS_ENDPOINT,
@@ -57,9 +85,6 @@ const handleUpdateApiAccess = async (req: Request, res: Response) => {
     
         const page = await browser.newPage();
 
-        const partnerId : string = req.body.partnerId;
-        const appId : string = req.params.appId;
-    
         await setupApiAccess(page, partnerId, appId);
     
         await browser.close();

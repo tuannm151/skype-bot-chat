@@ -1,12 +1,21 @@
 import winston, { createLogger } from "winston";
+import { ZodError } from "zod";
+
+const errorFormat = winston.format((info) => {  
+    if (info instanceof ZodError) {
+        return Object.assign({
+            message: "ZodError"
+        }, info);
+    }
+    return info;
+})();
 
 const logger = createLogger({
-    level: "info",
     format: winston.format.combine(
+        errorFormat,
         winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-        winston.format.errors({ stack: true }),
-        winston.format.splat(),
         winston.format.json(),
+        winston.format.errors({ stack: true }),
     ),
     defaultMeta: { service: "skype-bot" },
     transports: [

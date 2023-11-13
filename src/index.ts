@@ -26,11 +26,6 @@ server.listen(process.env.port || process.env.PORT || 3978, process.env.HOST || 
     await loadCommands();
     // Set the onTurnError for the singleton CloudAdapter.
     adapter.onTurnError = onTurnErrorHandler;
-    try {
-        throw new Error('test');
-    } catch (err) {
-        logger.error("abc", err);
-    }
 });
 
 // Catch-all for errors.

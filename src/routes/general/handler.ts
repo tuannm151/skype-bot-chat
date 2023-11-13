@@ -4,13 +4,16 @@ import { adapter } from "~/connector/adapter";
 import { messageBot } from "~/bots";
 import prisma from "~/connector/prisma";
 import logger from "~/logger";
+import { SendMessageBody, SendMessageBodySchema } from "./validation";
 
 const { MicrosoftAppId } = process.env;
 
 const handleSendMessage = async (req: Request, res: Response) => {
     try {
         const { body } = req;
-        const { text, conversationId } = body;
+        const messageBody = SendMessageBodySchema.parse(body);
+        const { text, conversationId } = messageBody as SendMessageBody;
+
         const conversation = await prisma.conversation.findUnique({
             where: {
                 id: conversationId
