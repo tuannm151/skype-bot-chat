@@ -11,9 +11,9 @@ datasource db {
 }
 
 model Conversation {
-  id          String      @id @default(uuid())
-  name        String
-  isGroup     Boolean
-  type        String
+  id          String      @id
+  name        String?
+  isGroup     Boolean?    @default(false)
+  type        String?
   reference    Json
 }

@@ -1,3 +1,4 @@
+import { MessageFactory } from "botbuilder";
 import logger from "~/logger";
 import { CommandHandlerArgs, Config, LangData } from "~/types";
 
@@ -20,10 +21,13 @@ const langData : LangData = {
 async function onCall({ context, getLang } : CommandHandlerArgs)  {
     try {
         const conversationId = context.activity.conversation.id;
-        await context.sendActivity(`Conversation ID: ${conversationId}`);
+        
+        const activity = MessageFactory.text(`Conversation ID: ${conversationId}`);
+
+        await context.sendActivity(activity);
     } catch (e) {
         logger.error(e);
-        await context.sendActivity(`${getLang('error')} ${e.message}`);
+        await context.sendActivity(MessageFactory.text(getLang('error')));
     }
 }
 

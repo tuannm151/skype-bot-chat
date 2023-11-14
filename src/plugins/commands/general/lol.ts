@@ -4,6 +4,7 @@ import { CardFactory, MessageFactory } from 'botbuilder';
 import { CommandHandlerArgs, Config, LangData } from "~/types";
 import GaleforceModule from 'galeforce-zenkjie';
 import { SummonerDTO } from 'galeforce-zenkjie/dist/galeforce/interfaces/dto';
+import logger from '~/logger';
 
 const galeforce = new GaleforceModule({
     'riot-api': {
@@ -52,7 +53,7 @@ const getTotalMastery = async (summonerId : string) => {
 const parseCard = ( summoner : SummonerDTO, mastery : number ) => {
     return CardFactory.heroCard(
         summoner.name,
-        [`https://ddragon.leagueoflegends.com/cdn/11.6.1/img/profileicon/${summoner.profileIconId}.png`],
+        [`https://lmssplus.com/static_image/img/profileicon/${summoner.profileIconId}.png`],
         CardFactory.actions([
             {
                 type: 'openUrl',
@@ -86,7 +87,8 @@ async function onCall({ context, params, getLang } : CommandHandlerArgs) {
                 break;
         }
     } catch (e) {
-        await context.sendActivity(`${getLang('error')} ${e.message}`);
+        logger.error(e);
+        await context.sendActivity(`${getLang('error')}`);
     }
 }
 

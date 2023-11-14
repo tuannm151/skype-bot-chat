@@ -77,7 +77,7 @@ async function onCall({ context, params, getLang } : CommandHandlerArgs) {
         await context.sendActivity(message);
     } catch (e) {
         logger.error(e);
-        await context.sendActivity(`${getLang('error')} ${e.message}`);
+        await context.sendActivity(`${getLang('error')}`);
     } finally {
         browser && await browser.close();
     }

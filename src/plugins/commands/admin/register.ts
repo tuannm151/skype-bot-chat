@@ -41,15 +41,15 @@ async function onCall({ context, getLang } : CommandHandlerArgs) {
                 id: conversationId,
                 name: context.activity.conversation.name,
                 isGroup: context.activity.conversation.isGroup,
-                type: context.activity.conversation.conversationType,
-                reference: TurnContext.getConversationReference(context.activity) as Prisma.JsonObject
+                reference: TurnContext.getConversationReference(context.activity) as Prisma.JsonObject,
+                type: context.activity.conversation.conversationType
             }
         });
       
-        await context.sendActivity('Registered new conversation');
+        await context.sendActivity(`Registered new conversation id ${conversationId}`);
     } catch (e) {
         logger.error(e);
-        await context.sendActivity(`${getLang('error')} ${e.message}`);
+        await context.sendActivity(getLang('error'));
     }
 }
 

@@ -36,10 +36,9 @@ export async function loadCommands() {
             } catch (err) {
                 logger.error(`Error loading plugin ${fileName}`, err);
             }
-            if (loadedCount > 0) {
-                logger.info(`Loaded ${loadedCount} plugins from ${category}`);
-            }
         }
-        
+        if (loadedCount > 0) {
+            logger.info(`Loaded ${loadedCount} plugins from ${category}`);
+        }   
     }
 }

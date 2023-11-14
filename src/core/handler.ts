@@ -35,11 +35,16 @@ class PluginHandler {
     async handleMessage(context : TurnContext) {
         const { text } = context.activity;
 
-        const textWithoutQuote = text.slice(text.lastIndexOf('>') + 1);
+        const textWithoutTags = text.replace(/<[^>]+>/g, '');
 
-        const textWithoutBotName = textWithoutQuote.replaceAll(this.botName, '');
+        let textWithoutMentions = textWithoutTags;
+        context.activity.entities?.forEach(entity => {
+            if (entity.type === 'mention' && typeof entity.text === 'string') {
+                textWithoutMentions = textWithoutMentions.replaceAll(entity.text.replace(/<[^>]+>/g, ''), '');
+            }
+        });
 
-        const tokens = textWithoutBotName.trim().split(/\s+/);
+        const tokens = textWithoutMentions.trim().split(/\s+/);
         logger.info(`Received message tokens: ${tokens}`);
 
         const command = tokens[0];
