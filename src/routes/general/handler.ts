@@ -2,9 +2,11 @@ import { Request, Response } from "restify";
 import { Activity, ConversationReference } from "botbuilder";
 import { adapter } from "~/connector/adapter";
 import { messageBot } from "~/bots";
-import prisma from "~/connector/prisma";
 import logger from "~/logger";
 import { SendMessageBody, SendMessageBodySchema } from "./validation";
+import { directus } from "~/connector/directus";
+import { Group } from "~/types/directus";
+import { readItems } from "@directus/sdk";
 
 const { MicrosoftAppId } = process.env;
 
@@ -14,11 +16,13 @@ const handleSendMessage = async (req: Request, res: Response) => {
         const messageBody = SendMessageBodySchema.parse(body);
         const { text, conversationId, mentions } = messageBody as SendMessageBody;
 
-        const conversation = await prisma.conversation.findUnique({
-            where: {
-                id: conversationId
+        const result = await directus.request<Group[]>(readItems('msbot_group', {
+            filter: {
+                skype_id: { _eq: conversationId }
             }
-        });
+        }));
+
+        const conversation = result?.[0];
        
         if (!conversation?.reference || typeof conversation.reference !== 'object') {
             res.send(404);

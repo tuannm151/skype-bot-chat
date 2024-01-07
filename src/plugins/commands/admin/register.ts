@@ -1,17 +1,18 @@
-import { Prisma } from "@prisma/client";
-import { TurnContext } from "botbuilder";
-import prisma from "~/connector/prisma";
-import logger from "~/logger";
-import { CommandHandlerArgs, Config, LangData } from "~/types";
+import { createItem, readItems } from '@directus/sdk';
+import { TurnContext } from 'botbuilder';
+import { directus } from '~/connector/directus';
+import logger from '~/logger';
+import { CommandHandlerArgs, Config, LangData } from '~/types';
+import { Group } from '~/types/directus';
 
-const config : Config = {
+const config: Config = {
     name: 'register',
     description: 'register conversation to db',
-    usage: '',
-    cooldown: 3,
+    usage: '[conversation name]',
+    cooldown: 3
 };
 
-const langData : LangData = {
+const langData: LangData = {
     en_US: {
         error: 'Error, try again later.'
     },
@@ -20,33 +21,56 @@ const langData : LangData = {
     }
 };
 
-async function onCall({ context, getLang } : CommandHandlerArgs) {
+async function onCall({ context, getLang, params }: CommandHandlerArgs) {
     try {
-        // check if conversation already registered
+    // check if conversation already registered
         const conversationId = context.activity.conversation.id;
+        const name = params?.join(' ');
 
-        const conversation = await prisma.conversation.findUnique({
-            where: {
-                id: conversationId
-            }
-        });
-
-        if (conversation) {
-            await context.sendActivity('Conversation already registered');
-            return;
+        if (!name) {
+            return await context.sendActivity(
+                `Usage: !${config.name} ${config.usage}`
+            );
         }
 
-        await prisma.conversation.create({
-            data : {
-                id: conversationId,
-                name: context.activity.conversation.name,
-                isGroup: context.activity.conversation.isGroup,
-                reference: TurnContext.getConversationReference(context.activity) as Prisma.JsonObject,
-                type: context.activity.conversation.conversationType
+        const groups = await directus.request<Group[]>(readItems('msbot_group', {
+            filter: {
+                _or: [
+                    { skype_id: { _eq: conversationId } },
+                    { name: { _eq: name } }
+                ]
+            },
+            fields: ['name', 'skype_id']
+        }));
+
+        if (groups.length) {
+            const group = groups[0];
+            if (group.skype_id === conversationId) {
+                return await context.sendActivity(
+                    `WARN: Conversation ${conversationId} already registered as [${group.name}]`
+                );
             }
-        });
-      
-        await context.sendActivity(`Registered new conversation id ${conversationId}`);
+            if (group.name === name) {
+                return await context.sendActivity(
+                    `ERROR: Please choose another name. Conversation [${name}] is already registered. `
+                );
+            }
+        }
+
+        const data = {
+            name,
+            is_group: context.activity.conversation.isGroup,
+            reference: TurnContext.getConversationReference(context.activity),
+            skype_id: conversationId
+        } as Group;
+
+        const result = await directus.request(createItem('msbot_group', data)); 
+
+        console.log(result);
+
+        await context.sendActivity(
+            `Registered new conversation id ${conversationId} as [${name}]`
+        );
     } catch (e) {
         logger.error(e);
         await context.sendActivity(getLang('error'));

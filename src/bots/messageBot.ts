@@ -1,22 +1,74 @@
+import { deleteItems } from '@directus/sdk';
 import { ActivityHandler, MessageFactory } from 'botbuilder';
-import prisma from '~/connector/prisma';
+import { directus } from '~/connector/directus';
 import pluginHandler from '~/core/handler.js';
+import logger from '~/logger';
+import { Group } from '~/types/directus';
 
 class MessageBot extends ActivityHandler {
     constructor() {
         super();
 
-        this.onEndOfConversation(async (context, next) => {
-            await prisma.conversation.delete({
-                where: {
-                    id: context.activity.conversation.id
-                }
-            });
+        this.onMessage(async (context, next) => {
+            await pluginHandler.handleMessage(context);
             await next();
         });
 
-        this.onMessage(async (context, next) => {
-            await pluginHandler.handleMessage(context);
+        this.onConversationUpdate(async (context, next) => {
+            const event = context.activity?.membersAdded?.length
+                ? 'membersAdded'
+                : context.activity?.membersRemoved?.length
+                    ? 'membersRemoved'
+                    : null;
+            if (event) {
+                const membersUpdated =
+          event === 'membersAdded'
+              ? context.activity.membersAdded
+              : context.activity.membersRemoved;
+                const isBotAffected = membersUpdated?.find(
+                    (member) => member.id === context.activity.recipient.id
+                );
+
+                switch (event) {
+                case 'membersAdded': {
+                    if (isBotAffected) {
+                        const helloText = `Hello everyone 👋👋 \n${process.env.BOT_NAME} is at your service! 👮👮`;
+                        await context.sendActivity(
+                            MessageFactory.text(helloText, helloText)
+                        );
+                        return logger.info(
+                            `Bot added to conversation ${context.activity.conversation.id}`
+                        );
+                    }
+                    const welcomeText = `Xin chào 👋👋`;
+                    await context.sendActivity(
+                        MessageFactory.text(welcomeText, welcomeText)
+                    );
+                    break;
+                }
+                case 'membersRemoved': {
+                    if (isBotAffected) {
+                        const result = await directus.request<Group[]>(
+                            deleteItems('msbot_group', {
+                                filter: {
+                                    skype_id: { _eq: context.activity.conversation.id }
+                                },
+                                fields: ['name']
+                            })
+                        );
+                        console.log(result);
+                        return logger.info(
+                            `Bot removed from conversation ${result?.[0]?.name || context.activity.conversation.id}`
+                        );
+                    }
+                    const goodbyeText = `Tạm biệt 👋👋`;
+                    await context.sendActivity(
+                        MessageFactory.text(goodbyeText, goodbyeText)
+                    );
+                    break;
+                }
+                }
+            }
             await next();
         });
 
@@ -25,19 +77,11 @@ class MessageBot extends ActivityHandler {
             const { from, recipient, replyToId } = activity;
             const { name: fromName } = from;
             const { name: recipientName } = recipient;
-            await context.sendActivity(MessageFactory.text(`, from: ${fromName}, recipient: ${recipientName}, replyToId: ${replyToId}`));
-            await next();
-        });
-
-        this.onMembersAdded(async (context, next) => {
-            const membersAdded = context.activity.membersAdded || [];
-            const welcomeText = 'Hello and welcome!';
-            for (let cnt = 0; cnt < membersAdded.length; ++cnt) {
-                if (membersAdded[cnt].id !== context.activity.recipient.id) {
-                    await context.sendActivity(MessageFactory.text(welcomeText, welcomeText));
-                }
-            }
-            // By calling next() you ensure that the next BotHandler is run.
+            await context.sendActivity(
+                MessageFactory.text(
+                    `, from: ${fromName}, recipient: ${recipientName}, replyToId: ${replyToId}`
+                )
+            );
             await next();
         });
     }
